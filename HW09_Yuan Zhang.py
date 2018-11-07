@@ -1,4 +1,3 @@
-
 """
 Author: Yuan Zhang
 Course: SSW 810
@@ -9,37 +8,39 @@ from prettytable import PrettyTable
 import os
 from collections import defaultdict
 
-
-def file_reader(path, fnum, sep = '\t'):
+def file_reader(path, fnum, sep = '\t', header = False):
     try:
         fp = open(path, 'r')
     except FileNotFoundError:
-        print("Oops! Can't open", path)
+        print("Oops! Can't open file {}".format(path))
     else:
         with fp:
+            counter = 0 
             for line in fp:  
-                fields = line.strip().split(sep)
+                counter += 1
+                if header == True and counter == 1:
+                    continue
+                fields = line.rstrip().split(sep)
                 if len(fields) != fnum:
                     raise ValueError("ValueError: {} has {} fields on line {} but expected {}".format(path, len(fields), counter, fnum))
                 else:
                     yield tuple(fields)
 
-
 class Repository:
     """ holds all of the data for a specific organization """
     def __init__(self, path, print_tb=True):
         self.path = path
-        self.students = defaultdict(Student) # key: cwid; value: instance of Student
-        self.instructors = defaultdict(Instructor) # key: cwid; value: instance of Instructor
+        self.students = dict() # key: cwid; value: instance of Student
+        self.instructors = dict() # key: cwid; value: instance of Instructor
 
         self.get_students(os.path.join(path, 'students.txt'))
         self.get_instructors(os.path.join(path, 'instructors.txt'))
         self.get_grades(os.path.join(path, 'grades.txt'))
 
         if print_tb:
-            print("---Student Summary---")
+            print("Student Summary")
             self.student_table()
-            print("---Instructor Summary---")
+            print("Instructor Summary")
             self.instructor_table()
 
     def get_students(self, path):
@@ -51,27 +52,30 @@ class Repository:
             self.instructors[cwid] = Instructor(cwid, name, department)
     
     def get_grades(self, path):
-        for student, course, grade, instructor in file_reader(path, 4, sep='\t'):
-            if student in self.students:
-                self.students[student].add_course(course, grade)
+        for student_cwid, course, grade, instructor_cwid in file_reader(path, 4, sep='\t'):
+            if student_cwid in self.students:
+                self.students[student_cwid].add_course(course, grade)
             else:
-                print('Student {} is not in the file!'.format(student))
-            if instructor in self.instructors:
-                self.instructors[instructor].add_student(course)
+                print('Student {} is not in the file!'.format(student_cwid))
+            if instructor_cwid in self.instructors:
+                self.instructors[instructor_cwid].add_student(course)
             else:
-                print('Instructor {} is not in the file!'.format(instructor))         
+                print('Instructor {} is not in the file!'.format(instructor_cwid))         
     
     def student_table(self):
         """ use PrettyTable to print students information """
         pt = PrettyTable(field_names=['CWID', 'Name', 'Completed Courses'])
         for cwid in self.students:
             pt.add_row(self.students[cwid].pt_rows())
+        print(pt)
     
     def instructor_table(self):
         """ use PrettyTable to print instructors information """
         pt = PrettyTable(field_names=['CWID', 'Name', 'Depart', 'Course', 'Students'])
         for cwid in self.instructors:
-            pt.add_row(self.instructors[cwid].pt_rows())
+            for line in self.instructors[cwid].pt_rows():
+                pt.add_row(line)
+        print(pt)
 
 
 class Student:
@@ -80,7 +84,7 @@ class Student:
         self.cwid = cwid
         self.name = name
         self.major = major
-        self.courses = defaultdict(int) # key is the course, value is the grade of the course
+        self.courses = dict() # key is the course, value is the grade of the course
     
     def add_course(self, course, grade):
         self.courses[course] = grade
@@ -102,8 +106,8 @@ class Instructor:
         self.courses[course] += 1
 
     def pt_rows(self):
-        for course, students in self.courses.items():
-            return [self. cwid, self.name, self.department, course, students]
+        for k in self.courses:
+            yield [self.cwid, self.name, self.department, k, self.courses[k]]
 
 
 def main():
