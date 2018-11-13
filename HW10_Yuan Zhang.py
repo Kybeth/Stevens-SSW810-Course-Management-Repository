@@ -7,6 +7,7 @@ Description of this script: Homework 09 - Stevens data repository
 from prettytable import PrettyTable
 import os
 from collections import defaultdict
+import unittest
 
 def file_reader(path, fnum, sep = '\t', header = False):
     try:
@@ -39,12 +40,9 @@ class Repository:
         self.get_instructors(os.path.join(path, 'instructors.txt'))
         self.get_grades(os.path.join(path, 'grades.txt'))
 
-        
-        #每个get_都和一个数据结构（自定义class）对应
-
         if print_tb:
             print('Majors Summary')
-            self.major_table()####
+            self.major_table()
             print("Student Summary")
             self.student_table()
             print("Instructor Summary")
@@ -76,8 +74,6 @@ class Repository:
             else:
                 print('Instructor {} is not in the file!'.format(instructor_cwid))         
     
-  
-
     def major_table(self):
         """ use PrettyTable to print major information """
         pt = PrettyTable(field_names=['Dept', 'Required', 'Electives'])
@@ -89,8 +85,10 @@ class Repository:
         """ use PrettyTable to print students] information """
         pt = PrettyTable(field_names=['CWID', 'Name', 'Major', 'Completed Courses', 'Remaining Required', 'Remaining Electives'])
         for cwid in self.students:
-            pt.add_row(self.students[cwid].pt_rows())##
+            pt.add_row(self.students[cwid].pt_rows())
         print(pt)
+
+
     
     def instructor_table(self):
         """ use PrettyTable to print instructor information """
@@ -99,9 +97,6 @@ class Repository:
             for line in self.instructors[cwid].pt_rows():
                 pt.add_row(line)
         print(pt)
-
-     
-
 
 
 class Major:
@@ -146,7 +141,6 @@ class Student:
     def pt_rows(self):
         return [self.cwid, self.name, self.major.dept, sorted(self.completed_courses()), self.major.remaining_r(set(self.completed_courses())), self.major.remaining_e(set(self.completed_courses()))]####
     
-
 class Instructor:
     """ an instructor's information """
     def __init__(self, cwid, name, department):
@@ -164,10 +158,20 @@ class Instructor:
             yield [self.cwid, self.name, self.department, k, self.courses[k]]
 
 
+class RepositoryTest(unittest.TestCase):
+    """ Automated test cases """
+    def test_stevens(self):
+        path = '/Users/kybeth/Documents/SIT/SSW_810/Stevens'
+        stevens = Repository(path) # read files and generate prettytables
+        self.assertEqual(stevens.students['10103'].pt_rows(), ['10103', 'Baldwin, C', 'SFEN', ['CS 501', 'SSW 564', 'SSW 567', 'SSW 687'], {'SSW 540', 'SSW 555'}, 'None'])
+        self.assertEqual(next(stevens.instructors['98765'].pt_rows()), ['98765', 'Einstein, A', 'SFEN', 'SSW 567', 4])
+        self.assertEqual(stevens.majors['SFEN'].pt_rows(), ['SFEN', ['SSW 540', 'SSW 555', 'SSW 564', 'SSW 567'], ['CS 501', 'CS 513', 'CS 545']])
+
+
 def main():
-    path = '/Users/kybeth/Documents/SIT/SSW_810/Stevens'
-    stevens = Repository(path) # read files and generate prettytables
+    unittest.main(exit=False, verbosity=2)
 
 
 if __name__ == '__main__':
     main()
+
