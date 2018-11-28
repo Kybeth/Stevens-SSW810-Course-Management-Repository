@@ -1,0 +1,33 @@
+h2
+{
+    color:green;
+    text-align:center;
+}
+
+h3
+{
+    text-align:center;
+}
+
+table
+{
+    margin-left:auto; 
+    margin-right:auto;
+}
+
+table, th, td 
+{
+    border: 1px solid grey;
+    border-collapse: collapse;
+}
+    
+th
+{
+    font-style:italic;
+    padding: 15px;
+}
+
+td
+{
+    padding: 5px;
+}
